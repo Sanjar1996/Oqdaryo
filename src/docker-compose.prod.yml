@@ -1,0 +1,57 @@
+version: '2'
+
+services:
+  oqdaryodb_prod:
+    container_name: oqdaryodb_prod
+    restart: always
+    image: postgres:12.2
+    environment:
+      POSTGRES_DB: db_oqdaryo_prod
+      POSTGRES_USER: oqdaryouser_prod
+      POSTGRES_PASSWORD: oqdaryopass_prod
+    networks:
+      - oqdaryo-network
+    volumes:
+        - oqdaryodata:/var/lib/postgresql/oqdaryodata/
+
+  oqdaryoweb_prod:
+    container_name: oqdaryoweb_prod
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:2323
+    volumes:
+      - static_volume_oqdaryo:/home/app/web/static
+      - media_volume_oqdaryo:/home/app/web/media
+    networks:
+      - oqdaryo-network
+    depends_on:
+      - oqdaryodb_prod
+    ports:
+      - "2323:2323"
+    env_file:
+      - ./.env.prod
+
+  oqdaryonginx:
+    container_name: oqdaryo-nginx
+    restart: always
+    build: ./nginx
+    volumes:
+      - static_volume_oqdaryo:/home/app/web/static
+      - media_volume_oqdaryo:/home/app/web/media
+    ports:
+      - "4343:4343"
+    networks:
+      - oqdaryo-network
+    depends_on:
+      - oqdaryoweb_prod
+
+volumes:
+  oqdaryodata:
+  static_volume_oqdaryo:
+  media_volume_oqdaryo:
+
+networks:
+  oqdaryo-network:
+    driver: bridge

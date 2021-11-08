@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+  oqdaryodb:
+    container_name: oqdaryodb
+    image: postgres
+    environment:
+      POSTGRES_DB: db_oqdaryo
+      POSTGRES_USER: oqdaryouser
+      POSTGRES_PASSWORD: oqdaryopass
+    volumes:
+      - postgres_data:/var/lib/postgresql/dataoqdaryo/
+    ports:
+      - "5432:5432"
+  oqdaryoweb:
+    container_name: oqdaryo
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/code
+    ports:
+      - "8000:8000"
+    depends_on:
+      - oqdaryodb
+    env_file:
+      - ./.env.dev
+
+volumes:
+  postgres_data:
